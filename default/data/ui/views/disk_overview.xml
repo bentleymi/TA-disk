@@ -1,6 +1,6 @@
 <dashboard version="1.1" theme="light">
   <label>TA-disk Overview</label>
-  <description>Collects disk health from smartctl (SATA/ATA SMART + NVMe) and /sys/class/nvme: health status, power-on hours, temperature, NVMe wear (percentage used, available spare), media erro</description>
+  <description>Collects disk health from smartctl (SATA/ATA SMART + NVMe) and /sys/class/nvme: health status, power-on hours, temperature, NVMe wear (percentage used, available spare), media</description>
   <row>
     <panel>
       <title>Hosts Reporting (latest)</title>
