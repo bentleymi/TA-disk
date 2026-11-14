@@ -1,0 +1,7 @@
+<application>
+  <nav>
+    <view name="disk_overview" />
+    <view name="disk_metrics" />
+    <search label="TA-disk Events" search="search index=main sourcetype=disk:status" />
+  </nav>
+</application>

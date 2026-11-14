@@ -1,0 +1,56 @@
+TA-disk
+====
+
+Collects disk health from smartctl (SATA/ATA SMART + NVMe) and /sys/class/nvme: health status, power-on hours, temperature, NVMe wear (percentage used, available spare), media errors and SMART raw counters (reallocated, uncorrected, CRC). Emits per-disk JSON events to index=main (sourcetype disk:status) and numeric disk.<device>.<attribute> metrics to index=metrics (sourcetype disk:metrics), with overview and metrics dashboards.
+
+Prerequisites
+-------------
+  * smartmontools (smartctl) installed on the host
+  * nvme disks are read from /sys/class/nvme, no nvme-cli required
+  * Splunk Enterprise or Universal Forwarder 9.x - 10.6 (forwarder recommended
+    on monitored hosts).
+  * A metrics-typed index (default name: metrics) on the indexer:
+
+      [metrics]
+      datatype = metric
+
+    Forwarders only need that index to exist on the indexer side.
+  * No network egress, no root requirement beyond the Splunk service account.
+    Fully standalone add-on with no dependencies.
+
+Install
+-------
+Install on each monitored host (Apps > Install app from file, splunk install
+app, or deployment server), restart Splunk, then verify:
+
+  index=main sourcetype="disk:status" | head
+
+Search quick reference
+----------------------
+  index=main sourcetype="disk:status" | head
+  | mcatalog values(metric_name) where index=metrics metric_name="disk.*" by host
+  | mstats avg("disk.*") where index=metrics span=60s by host
+
+Usage
+-----
+Events: index=main sourcetype=disk:status  (per-disk JSON: model, serial, firmware,
+health, temperature, power_on_hours, percentage_used, available_spare, media_errors, raw counters)
+Metrics: disk.<device>_<attribute> on index=metrics
+Dashboards: TA-Disk > Disk Overview / Disk Metrics
+
+Configure
+---------
+Override the interval or destination index in etc/apps/TA-disk/local/inputs.conf
+(never edit default/).
+
+Troubleshooting
+---------------
+  * If no data: verify smartctl is installed and the Splunk service can run it (splunkd runs as root or the splunk user; SMART needs read access to /dev/block devices).
+  * Read-only filesystem or non-SMART disks (virtio) are skipped gracefully.
+  * NVMe wear fields exist only on NVMe devices; SATA disks emit SMART raw counters instead.
+
+License
+-------
+SOURCE-AVAILABLE (see LICENSE) - free personal, educational and evaluation
+use; commercial or production use requires a paid license from BentleyPC
+LLC (https://www.bentleypc.com).
