@@ -3,43 +3,91 @@
   <description>Collects disk health from smartctl (SATA/ATA SMART + NVMe) and /sys/class/nvme: health status, power-on hours, temperature, NVMe wear (percentage used, available spare), media</description>
   <row>
     <panel>
-      <title>Hosts Reporting (latest)</title>
+      <title>Disks (per host, latest)</title>
+      <single>
+        <search>
+          <query>| mstats avg("disk.total") as value where index=metrics span=5m
+| fields - _time | tail 1</query>
+          <done/>
+        </search>
+        <option name="underLabel">avg of latest per host</option>
+      </single>
+    </panel>
+    <panel>
+      <title>SMART readable (per host, latest)</title>
+      <single>
+        <search>
+          <query>| mstats avg("disk.smart_available") as value where index=metrics span=5m
+| fields - _time | tail 1</query>
+          <done/>
+        </search>
+        <option name="underLabel">avg of latest per host</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Disks in FAIL state (hosts reporting)</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="disk:status" _raw="*status*: *fail*"
+| stats dc(host) as value</query>
+          <done/>
+        </search>
+      </single>
+    </panel>
+    <panel>
+      <title>Disks (fleet total, latest)</title>
+      <single>
+        <search>
+          <query>index=main sourcetype="disk:status"
+| eventstats latest(_time) as lt by host
+| dedup host lt
+| rex field=_raw max_match=0 "\"model\":\s*\"(?&lt;m&gt;[^\"]+)\""
+| mvexpand m
+| stats count(m) as value</query>
+          <done/>
+        </search>
+        <option name="underLabel">sum of latest per host</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Disks - latest snapshot per host</title>
       <table>
         <search>
           <query>index=main sourcetype="disk:status"
-| stats latest(_time) as "Last seen", count as Reports by host
-| table host "Last seen" Reports</query>
+| dedup host
+| rex field=_raw max_match=0 "\"(?&lt;k&gt;[^\"]+)\":\s*(?&lt;o&gt;\{[^{}]*\})"
+| where match(o,"\"model\"")
+| eval z=mvzip(k,o,"^^")
+| mvexpand z
+| rex field=z "^(?&lt;k&gt;[^^]+)\^\^(?&lt;o&gt;.+)$"
+| spath input=o path=model | spath input=o path=type | spath input=o path=serial | spath input=o path=smart_available | spath input=o path=health | spath input=o path=temperature | spath input=o path=power_on_hours | spath input=o path=percentage_used
+| table host k model type serial smart_available health temperature power_on_hours percentage_used</query>
           <done/>
         </search>
+        <option name="count">100</option>
         <option name="drilldown">none</option>
       </table>
     </panel>
   </row>
   <row>
     <panel>
-      <title>Distinct disk.* Metrics (last hour)</title>
-      <single>
-        <search>
-          <query>| mcatalog values(metric_name) as m where index=metrics metric_name="disk.*"
-| eval count=mvcount(m)</query>
-          <done/>
-        </search>
-        <option name="underLabel">disk.* metrics streaming</option>
-      </single>
-    </panel>
-  </row>
-  <row>
-    <panel>
-      <title>Issues (newest first)</title>
+      <title>Disks in FAIL state</title>
       <table>
         <search>
-          <query>index=main sourcetype="disk:status" _raw="*alarm*"
-| sort - _time
-| table _time host _raw
-| rename _raw as Event
-| head 200</query>
+          <query>index=main sourcetype="disk:status"
+| dedup host
+| rex field=_raw max_match=0 "\"(?&lt;k&gt;[^\"]+)\":\s*(?&lt;o&gt;\{[^{}]*\})"
+| where match(o,"\"model\"") and match(o,"\"status\": \"fail\"")
+| eval z=mvzip(k,o,"^^")
+| mvexpand z
+| rex field=z "^(?&lt;k&gt;[^^]+)\^\^(?&lt;o&gt;.+)$"
+| spath input=o path=model | spath input=o path=type | spath input=o path=health | spath input=o path=percentage_used | spath input=o path=media_errors
+| table host k model type health percentage_used media_errors</query>
           <done/>
         </search>
+        <option name="count">100</option>
         <option name="drilldown">none</option>
       </table>
     </panel>

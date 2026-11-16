@@ -1,83 +1,92 @@
 <dashboard version="1.1" theme="light">
   <label>TA-disk Metrics</label>
-  <description>Index-time metrics over index=metrics (sourcetype=disk:metrics)</description>
+  <description> Index-time metrics over index=metrics (sourcetype disk:metrics); series prefixed 'disk.'.</description>
   <row>
     <panel>
-      <title>All disk.* series</title>
+      <title>All disk.* series (fleet counts + per-disk attrs where SMART is readable)</title>
       <chart>
         <search>
           <query>| mstats avg("disk.*") as "v*" where index=metrics by metric_name span=5m
-| foreach v* [eval Value=coalesce(Value,&lt;&lt;FIELD&gt;&gt;)]
-| fields - v*
-| xyseries _time metric_name Value</query>
+| rename v* as "disk.*"</query>
           <done/>
         </search>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
         <option name="charting.drilldown">none</option>
       </chart>
     </panel>
-      <panel>
-      <title>Temperatures</title>
+  </row>
+  <row>
+    <panel>
+      <title>Temperature (C, per disk - where SMART is readable)</title>
       <chart>
         <search>
-          <query>| mstats avg("disk.*") as "v*" where index=metrics by metric_name span=5m
-| search metric_name="*temperature*"
-| foreach v* [eval Value=coalesce(Value,&lt;&lt;FIELD&gt;&gt;)]
-| fields - v*
-| xyseries _time metric_name Value</query>
+          <query>| mstats avg("disk.*temperature") as "v*" where index=metrics by metric_name span=5m
+| rename v* as "disk.*temperature"</query>
           <done/>
         </search>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
         <option name="charting.drilldown">none</option>
       </chart>
     </panel>
-      <panel>
-      <title>NVMe wear (percentage used / available spare)</title>
+  </row>
+  <row>
+    <panel>
+      <title>Power-on hours (per disk)</title>
       <chart>
         <search>
-          <query>| mstats avg("disk.*") as "v*" where index=metrics by metric_name span=5m
-| search metric_name IN ("*percentage_used*","*available_spare*")
-| foreach v* [eval Value=coalesce(Value,&lt;&lt;FIELD&gt;&gt;)]
-| fields - v*
-| xyseries _time metric_name Value</query>
+          <query>| mstats avg("disk.*power_on_hours") as "v*" where index=metrics by metric_name span=5m
+| rename v* as "disk.*power_on_hours"</query>
           <done/>
         </search>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
         <option name="charting.drilldown">none</option>
       </chart>
     </panel>
-      <panel>
-      <title>Errors (reallocated / uncorrected / CRC)</title>
+  </row>
+  <row>
+    <panel>
+      <title>NVMe percentage used (wear)</title>
       <chart>
         <search>
-          <query>| mstats avg("disk.*") as "v*" where index=metrics by metric_name span=5m
-| search metric_name IN ("*realloc_raw*","*unc_raw*","*crc_raw*","*offline_unc_raw*","*ud_unc_raw*")
-| foreach v* [eval Value=coalesce(Value,&lt;&lt;FIELD&gt;&gt;)]
-| fields - v*
-| xyseries _time metric_name Value</query>
+          <query>| mstats avg("disk.*percentage_used") as "v*" where index=metrics by metric_name span=5m
+| rename v* as "disk.*percentage_used"</query>
           <done/>
         </search>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
         <option name="charting.drilldown">none</option>
       </chart>
     </panel>
-      <panel>
-      <title>Power-on hours</title>
+  </row>
+  <row>
+    <panel>
+      <title>NVMe available spare (%)</title>
       <chart>
         <search>
-          <query>| mstats avg("disk.*") as "v*" where index=metrics by metric_name span=5m
-| search metric_name="*power_on_hours*"
-| foreach v* [eval Value=coalesce(Value,&lt;&lt;FIELD&gt;&gt;)]
-| fields - v*
-| xyseries _time metric_name Value</query>
+          <query>| mstats avg("disk.*available_spare") as "v*" where index=metrics by metric_name span=5m
+| rename v* as "disk.*available_spare"</query>
           <done/>
         </search>
         <option name="charting.chart">line</option>
-        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>SMART realloc raw (per disk)</title>
+      <chart>
+        <search>
+          <query>| mstats avg("disk.*realloc_raw") as "v*" where index=metrics by metric_name span=5m
+| rename v* as "disk.*realloc_raw"</query>
+          <done/>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.nullValueRendering">connect</option>
         <option name="charting.drilldown">none</option>
       </chart>
     </panel>
