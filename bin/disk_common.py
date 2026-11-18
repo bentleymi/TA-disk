@@ -185,7 +185,8 @@ def collect_smart(name):
     if tv is not None:
         rec["temperature"] = tv
 
-    if rec.get("type") == "nvme":
+    is_nvme = name.startswith("nvme") or "nvme_smart_health_information_log" in data
+    if is_nvme:
         log = data.get("nvme_smart_health_information_log") or {}
         if not log:
             # old nested format fallback
@@ -226,10 +227,10 @@ def collect_smart(name):
                     rec[dst] = int(_num(v))
     else:
         attrs = data.get("ata_smart_attributes")
-        if isinstance(attrs, dict):
-            items = list(attrs.items())
-        else:
-            items = [(a.get("id"), a) for a in (attrs or []) if isinstance(a, dict)]
+        table = attrs.get("table") if isinstance(attrs, dict) else attrs
+        if not isinstance(table, list):
+            table = []
+        items = [(a.get("id"), a) for a in table if isinstance(a, dict)]
         for aid, a in items:
             try:
                 aid = int(aid)
