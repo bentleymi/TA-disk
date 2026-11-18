@@ -58,9 +58,9 @@ sudo wrapper (helper files ship in deploy/ inside this app):
      command -v smartctl - then validate with visudo):
        cp deploy/ta_disk.sudoers /etc/sudoers.d/ta-disk && chmod 0440 ... && visudo -cf /etc/sudoers.d/ta-disk
   3. Enable in etc/apps/TA-disk/local/inputs.conf:
-       [script://./bin/disk_events.py]
+       [script://$SPLUNK_HOME/etc/apps/TA-disk/bin/disk_events.py]
        env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
-       [script://./bin/disk_metrics.py]
+       [script://$SPLUNK_HOME/etc/apps/TA-disk/bin/disk_metrics.py]
        env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
   4. Restart Splunk. Verify:
        sudo -u splunk /usr/local/sbin/ta_disk_smartctl -j -a /dev/nvme0n1
