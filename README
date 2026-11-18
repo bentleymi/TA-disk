@@ -15,8 +15,11 @@ Prerequisites
       datatype = metric
 
     Forwarders only need that index to exist on the indexer side.
-  * No network egress, no root requirement beyond the Splunk service account.
-    Fully standalone add-on with no dependencies.
+  * No network egress. Fully standalone add-on with no dependencies.
+  * SMART access: if the Splunk service runs as root, smartctl works out of the
+    box. If it runs as an unprivileged user (e.g. "splunk"), see SMART access
+    below - per-disk telemetry (temperature, wear, raw counters) otherwise
+    stays empty (smart_available=0).
 
 Install
 -------
@@ -42,6 +45,27 @@ Configure
 ---------
 Override the interval or destination index in etc/apps/TA-disk/local/inputs.conf
 (never edit default/).
+
+SMART access (non-root forwarder service)
+------------------------------------------
+smartctl needs root for NVMe/ATA health ioctls. When splunkd runs as an
+unprivileged user, grant it passwordless smartctl and point the inputs at a
+sudo wrapper (helper files ship in deploy/ inside this app):
+
+  1. Install the wrapper (root):
+       install -m 0755 deploy/ta_disk_smartctl /usr/local/sbin/ta_disk_smartctl
+  2. Install the sudoers rule (adjust user and the smartctl path -
+     command -v smartctl - then validate with visudo):
+       cp deploy/ta_disk.sudoers /etc/sudoers.d/ta-disk && chmod 0440 ... && visudo -cf /etc/sudoers.d/ta-disk
+  3. Enable in etc/apps/TA-disk/local/inputs.conf:
+       [script://./bin/disk_events.py]
+       env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
+       [script://./bin/disk_metrics.py]
+       env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
+  4. Restart Splunk. Verify:
+       sudo -u splunk /usr/local/sbin/ta_disk_smartctl -j -a /dev/nvme0n1
+     should print an nvme_smart_health_information_log, and
+       | mcatalog values(metric_name) where index=metrics metric_name="disk.*percentage_used"
 
 Troubleshooting
 ---------------

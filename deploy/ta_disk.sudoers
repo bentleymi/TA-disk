@@ -1,0 +1,5 @@
+# TA-disk: allow the Splunk service account to read SMART data via smartctl.
+# Copy to /etc/sudoers.d/ta-disk, chmod 0440, validate with visudo -cf.
+# Adjust "splunk" to your Splunk service user and the smartctl path to
+# `command -v smartctl`. Remove this file to revoke access.
+splunk ALL=(root) NOPASSWD: /usr/sbin/smartctl
