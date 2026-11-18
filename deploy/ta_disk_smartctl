@@ -1,6 +1,6 @@
 #!/bin/sh
 # TA-disk smartctl wrapper: lets an unprivileged Splunk service account run
 # smartctl via a narrow passwordless sudoers rule (deploy/ta_disk.sudoers).
-# Install to /usr/local/sbin/ta_disk_smartctl (root:root, 0755), then set
-# env.TA_DISK_SMARTCTL=/usr/local/sbin/ta_disk_smartctl on the TA-disk inputs.
+# Install to /usr/local/sbin/ta_disk_smartctl (root:root, 0755); TA-disk
+# auto-detects it there. TA_DISK_SMARTCTL (process env) can point elsewhere.
 exec /usr/bin/sudo -n /usr/sbin/smartctl "$@"

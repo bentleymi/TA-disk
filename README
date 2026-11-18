@@ -57,12 +57,10 @@ sudo wrapper (helper files ship in deploy/ inside this app):
   2. Install the sudoers rule (adjust user and the smartctl path -
      command -v smartctl - then validate with visudo):
        cp deploy/ta_disk.sudoers /etc/sudoers.d/ta-disk && chmod 0440 ... && visudo -cf /etc/sudoers.d/ta-disk
-  3. Enable in etc/apps/TA-disk/local/inputs.conf:
-       [script://$SPLUNK_HOME/etc/apps/TA-disk/bin/disk_events.py]
-       env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
-       [script://$SPLUNK_HOME/etc/apps/TA-disk/bin/disk_metrics.py]
-       env.TA_DISK_SMARTCTL = /usr/local/sbin/ta_disk_smartctl
-  4. Restart Splunk. Verify:
+  3. Restart Splunk - the add-on auto-detects /usr/local/sbin/ta_disk_smartctl
+     and prefers it when present (falls back to smartctl otherwise; an
+     explicit TA_DISK_SMARTCTL process environment variable overrides all).
+  4. Verify:
        sudo -u splunk /usr/local/sbin/ta_disk_smartctl -j -a /dev/nvme0n1
      should print an nvme_smart_health_information_log, and
        | mcatalog values(metric_name) where index=metrics metric_name="disk.*percentage_used"

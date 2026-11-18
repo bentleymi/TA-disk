@@ -8,7 +8,35 @@ import sys
 BLOCK = "/sys/class/block"
 NVME = "/sys/class/nvme"
 
-SMARTCTL = os.environ.get("TA_DISK_SMARTCTL", "smartctl")
+def _smart_cmds():
+    env = os.environ.get("TA_DISK_SMARTCTL")
+    if env:
+        return [env]
+    cands = []
+    if os.path.exists("/usr/local/sbin/ta_disk_smartctl"):
+        cands.append("/usr/local/sbin/ta_disk_smartctl")
+    for p in ("/usr/sbin/smartctl", "/usr/bin/smartctl"):
+        if os.path.exists(p):
+            cands.append(p)
+    cands.append("smartctl")
+    return cands
+
+
+SMARTCMDS = _smart_cmds()
+_SMART_KEYS = ("smart_status", "temperature", "nvme_smart_health_information_log",
+               "ata_smart_attributes", "scsi_smart_attributes")
+
+
+def _smartctl_json(name):
+    last = None
+    for cmd in SMARTCMDS:
+        data = run_json([cmd, "-a", "-j", "/dev/%s" % name])
+        if not data:
+            continue
+        last = data
+        if any(k in data for k in _SMART_KEYS):
+            return data
+    return last
 
 # ATA attribute id -> metric key (raw values are the meaningful ones)
 ATA_ATTRS = {
@@ -125,7 +153,7 @@ def discover_disks():
 
 
 def collect_smart(name):
-    data = run_json([SMARTCTL, "-a", "-j", "/dev/%s" % name])
+    data = _smartctl_json(name)
     if data is None:
         return {"smart_available": 0, "status": "ok"}
     rec = {}
