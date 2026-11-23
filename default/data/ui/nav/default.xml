@@ -3,5 +3,6 @@
     <view name="disk_overview" />
     <view name="disk_metrics" />
     <search label="TA-disk Events" search="search index=main sourcetype=disk:status" />
+    <view name="license" />
   </nav>
 </application>
